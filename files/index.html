@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Emotion Selector</title>
+</head>
+<body>
+    <h1>Select Emotions</h1>
+    <form id="emotionForm">
+        <label><input type="checkbox" name="emotions" value="happy"> Happy</label><br>
+        <label><input type="checkbox" name="emotions" value="sad"> Sad</label><br>
+        <label><input type="checkbox" name="emotions" value="angry"> Angry</label><br>
+        <label><input type="checkbox" name="emotions" value="joyful"> Joyful</label><br>
+        <button type="button" onclick="submitForm()">Submit</button>
+    </form>
+
+    <h2>Results</h2>
+    <pre id="results"></pre>
+
+    <script>
+        function submitForm() {
+            const form = document.getElementById('emotionForm');
+            const selectedEmotions = Array.from(form.elements['emotions'])
+                .filter(input => input.checked)
+                .map(input => input.value);
+
+            fetch('/related_keywords', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ selected_emotions: selectedEmotions }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('results').textContent = JSON.stringify(data, null, 2);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+    </script>
+</body>
+</html>

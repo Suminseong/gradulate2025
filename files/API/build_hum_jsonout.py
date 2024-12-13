@@ -4,10 +4,10 @@ from sklearn.metrics.pairwise import cosine_similarity
 import random
 
 # JSON 파일 로드
-with open('emotion.json', 'r') as file:
+with open('files/API/emotion.json', 'r') as file:
     emotion_data = json.load(file)
 
-with open('behavior.json', 'r') as file:
+with open('files/API/behavior.json', 'r') as file:
     behavior_data = json.load(file)
 
 # 키워드와 임베딩 병합
