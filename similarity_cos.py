@@ -2,17 +2,22 @@ from flask import Flask, request, jsonify
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 import json
+import chardet
 
 # Flask App Initialization
 app = Flask(__name__)
 
-# Load Data
-with open('emotion.json', 'r') as f:
-    emotion_data = json.load(f)
-with open('behavior.json', 'r') as f:
-    behavior_data = json.load(f)
-with open('social.json', 'r') as f:
-    social_data = json.load(f)
+# Load Data with Encoding Detection
+def load_json_with_encoding(file_path):
+    with open(file_path, 'rb') as f:
+        raw_data = f.read()
+        detected_encoding = chardet.detect(raw_data)['encoding']
+    with open(file_path, 'r', encoding=detected_encoding) as f:
+        return json.load(f)
+
+emotion_data = load_json_with_encoding('emotion.json')
+behavior_data = load_json_with_encoding('behavior.json')
+social_data = load_json_with_encoding('social.json')
 
 # Helper Function to Compute Similarity
 def find_similar_keywords(input_keywords, dataset, top_n=3):
