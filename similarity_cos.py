@@ -74,9 +74,9 @@ def recommend():
 
         # 추천 결과 반환
         return json.dumps({
-            "input_keywords": keywords,  # 입력받은 키워드
-            "recommended_emotions": recommended_emotions,  # 추천된 감정 키워드
-            "recommended_socials": recommended_socials  # 추천된 사회적 키워드
+            "입력한 키워드는": keywords,  # 입력받은 키워드
+            "유사한 감정은": recommended_emotions,  # 추천된 감정 키워드
+            "유사한 사회적 키워드는": recommended_socials  # 추천된 사회적 키워드
         }, ensure_ascii=False)
 
     except Exception as e:
