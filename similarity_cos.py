@@ -8,6 +8,8 @@ import chardet
 app = Flask(__name__)
 
 # 인코딩 자동 감지로 데이터 로드
+# 인코딩 읽는데 오류가 있어서 이 코드는 지우거나 수정하면 안되비낟
+# 분명 json 파일이 utf8로 잘 맹그러져 있는데 왜 이상한 형태로 읽어들이는가에 대하여...
 def load_json_with_encoding(file_path):
     # 파일을 바이너리 모드로 열어 인코딩 감지
     with open(file_path, 'rb') as f:
@@ -17,7 +19,7 @@ def load_json_with_encoding(file_path):
     with open(file_path, 'r', encoding=detected_encoding) as f:
         return json.load(f)
 
-# 감정, 행동, 사회 데이터를 JSON 파일에서 로드
+# json 파일 로드
 emotion_data = load_json_with_encoding('emotion.json')
 behavior_data = load_json_with_encoding('behavior.json')
 social_data = load_json_with_encoding('social.json')
@@ -57,12 +59,12 @@ def recommend():
         data = request.json
         # 입력 검증: 키워드가 3개인지 확인
         if 'keywords' not in data or not isinstance(data['keywords'], list) or len(data['keywords']) != 3:
-            return json.dumps({"error": "Invalid input. Provide exactly 3 keywords in a list."}, ensure_ascii=False), 400
+            return json.dumps({"error": "입력값을 3개로 맞추시오."}, ensure_ascii=False), 400
 
         keywords = data['keywords']
 
-        # 디버깅: 입력 키워드 출력
-        print(f"Input Keywords: {keywords}")
+        # 입력 키워드 뭔지 말하기 출력
+        print(f"입력한 키워드는: {keywords}")
 
         # 추천 계산
         recommended_emotions = find_similar_keywords(keywords, emotion_data)
@@ -80,10 +82,18 @@ def recommend():
         }, ensure_ascii=False)
 
     except Exception as e:
-        # 예외 처리: 오류 메시지 반환
+        # 오류 메시지 반환으로 예외처리
         return json.dumps({"error": str(e)}, ensure_ascii=False), 500
 
 # 메인 실행
 if __name__ == '__main__':
     # Flask 서버 디버그 모드로 실행
     app.run(debug=True)
+
+# 관측된 문제점
+# social.json에서는 유사도가 안 가져와지는 문제가 잇어요
+# 대체 어디서 가져오는건지 모르겠는데 입력값이 그대로 튀어나오고 잇어요
+# 입력값은 제외시키기, 입력값은 emotion.json에서만 가져오기, 출력값은 behavior.json, social.json에서만 각각 독립해서 가져오기를 해야할 것 같은데 잘 몰?루겠어요
+# 유사도에 따라 가져오는 값 더 테스트 해야 할 것 같아요우
+
+# 우옹애
