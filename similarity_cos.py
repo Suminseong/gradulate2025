@@ -9,6 +9,7 @@ app = Flask(__name__)
 
 # 인코딩 자동 감지로 데이터 로드
 # 인코딩 읽는데 오류가 있어서 이 코드는 지우거나 수정하면 안되비낟
+
 # 분명 json 파일이 utf8로 잘 맹그러져 있는데 왜 이상한 형태로 읽어들이는가에 대하여...
 def load_json_with_encoding(file_path):
     # 파일을 바이너리 모드로 열어 인코딩 감지
@@ -25,12 +26,28 @@ behavior_data = load_json_with_encoding('behavior.json')
 social_data = load_json_with_encoding('social.json')
 
 # 유사 키워드 계산을 위한 헬퍼 함수
-def find_similar_keywords(input_keywords, dataset, top_n=3):
+def find_similar_keywords(input_keywords, dataset, exclude_inputs=False, top_n=3):
     # 입력 키워드를 소문자로 정규화
     normalized_input_keywords = [kw.strip().lower() for kw in input_keywords]
     # 데이터셋에서 입력 키워드와 매칭되는 임베딩 추출
     input_embeddings = [item['embedding'] for item in dataset if item.get('meaning_ko', '').strip().lower() in normalized_input_keywords]
     dataset_embeddings = np.array([item['embedding'] for item in dataset])
+    dataset_keywords = [item['meaning_ko'].strip().lower() for item in dataset]
+    
+    ################
+    ######신규######
+    ################
+    # 출력 결과에 입력값은 제외하기
+    if exclude_inputs:
+        dataset_keywords, dataset_embeddings = zip(*[
+            (keyword, embedding) for keyword, embedding in zip(dataset_keywords, dataset_embeddings)
+            if keyword not in normalized_input_keywords
+        ])
+        dataset_embeddings = np.array(dataset_embeddings) #배열 재생성 단
+    ###################
+    ######신규 끝######
+    ###################
+    
 
     # 매칭된 임베딩이 없을 경우 빈 리스트 반환
     if not input_embeddings:
@@ -73,6 +90,16 @@ def recommend():
         # 디버깅: 추천 결과 출력
         print(f"Recommended Emotions: {recommended_emotions}")
         print(f"Recommended Socials: {recommended_socials}")
+        
+        # 데이터셋 별로 독립적인 추천 결과 생성하는 신규 코드단.
+        # recommended_emotions = find_similar_keywords(keywords, emotion_data, exclude_inputs=False)
+        # recommended_behaviors = find_similar_keywords(keywords, behavior_data, exclude_inputs=True)
+        # recommended_socials = find_similar_keywords(keywords, social_data, exclude_inputs=True)
+
+        # print(f"Recommended Emotions: {recommended_emotions}")
+        # print(f"Recommended Behaviors: {recommended_behaviors}")
+        # print(f"Recommended Socials: {recommended_socials}")
+
 
         # 추천 결과 반환
         return json.dumps({
@@ -95,5 +122,7 @@ if __name__ == '__main__':
 # 대체 어디서 가져오는건지 모르겠는데 입력한 값이 그대로 튀어나오고 잇어요. 뭔가 이상해.
 # 입력값은 제외시키기, 입력값은 emotion.json에서만 가져오기, 출력값은 behavior.json, social.json에서만 각각 독립해서 가져오기를 해야할 것 같은데 잘 몰?루겠어요
 # 유사도에 따라 가져오는 값 더 테스트 해야 할 것 같아요우
+
+
 
 # 우옹애
