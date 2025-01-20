@@ -99,7 +99,7 @@
     <script>
         // 전역 대화 기록 저장소
         const conversationHistory = [
-            { role: "system", content: "사용자가 제출한 내용을 읽고 퍼소나를 생성합니다. 이름과 성별: 가명을 넣습니다. 성별은 남/여만 허용합니다. 나이: 사용자가 원하는 연령대에 맞춰 생성합니다. 직업: 사용자가 제시한 인터뷰 또는 상황조건에 맞게 생성합니다. 또는, 사용자가 원하는 직업으로 넣어도 됩니다. 취미: 가상의 인물이 가진 취미입니다. 인터뷰 주제와 꼭 관련될 필요는 없으며, MBTI나 거주지, 소득과 관련성만 있으면 됩니다. 예를 들어, 소득 20만원의 학생이 취미가 스포츠카 수집이면 이상하겠죠? 소득: 알바/정규직/계약직 등 표기와 함께 현재 벌고 있는 연간 수입 거주지(도/광역시~시/군/구): 대전광역시 유성구, 경상남도 사천시 등 대략적인 지명만 적으면 됩니다. 이 지역을 바탕으로 사투리를 적용할 것입니다.  MBTI: 16가지 성격유형인 MBTI중 하나를 골라 집어넣은 뒤, 그에 대한 짧은 설명도 적으세요. 성격 특이사항: MBTI로 표현되지 않을 수 있는 내용들도 자유롭게 추가합니다. 가족구성: 1인가구, 연인동거, 결혼, 자녀유무, 부모동거, 조부모가정, 한부모가정, 아동보호소, 기러기가정 등등 다양한 상황들의 조합이 후보가 될 수 있습니다. 언어습관: 공격적, 다혈질, 내성적, 적극적, 수비적, 말 더듬음, 소극적, 단답형, 장문형 등 주요 언어습관. 인터뷰 주제에 대한 생각: 인터뷰 주제에 대한 이해도, 흥미, 경험에 대한 이야기, 상황등을 100자 이내로 자유롭게 채웁니다. 한마디: 인터뷰 대상자가 자기소개를 하는 한 문장 대사를 출력하세요." }
+            { role: "system", content: "사용자가 제출한 내용을 읽고 퍼소나를 생성합니다. 성별: 남자 또는 여자. 이름: 한국식으로 3글자 이름만 허용. 나이: 사용자가 원하는 연령대에 맞춰 생성. 직업: 사용자가 제시한 인터뷰 또는 상황조건에 맞게 생성합니다. 또는, 사용자가 원하는 직업으로 넣어도 됩니다. 취미: 가상의 인물이 가진 취미입니다. 인터뷰 주제와 꼭 관련될 필요는 없으며, MBTI나 거주지, 소득과 관련성만 있으면 됩니다. 예를 들어, 소득이 낮은데 자동차 수집, 악기 취미가 있으면 안됨. 소득: 알바/정규직/계약직, 현재 벌고 있는 연간 수입. 거주지(도/광역시~시/군/구): 대전광역시 유성구, 경상남도 사천시 등 대략적인 지명만 적으면 됩니다.  MBTI: 16가지 성격유형인 MBTI중 하나를 골라 집어넣은 뒤, 그에 대한 짧은 설명도 적으세요. 성격 특이사항: MBTI로 표현되지 않을 수 있는 내용들도 자유롭게 추가합니다. 가족구성: 1인가구, 연인동거, 결혼, 자녀유무, 부모동거, 조부모가정, 한부모가정, 아동보호소, 기러기가정 등등 다양한 상황들에서 선택. 언어습관: 공격적, 다혈질, 내성적, 적극적, 수비적, 말 더듬음, 소극적, 단답형, 장문형, 지역 사투리 등 주요 언어습관. 인터뷰 주제에 대한 생각: 인터뷰 주제에 대한 이해도, 흥미, 경험에 대한 이야기, 상황등을 100자 이내로 자유롭게 채웁니다. 한마디: 인터뷰 대상자가 자기소개를 하는 한 문장 대사를 출력. 언어습관을 활용." }
         ];
 
         // DOM 요소 참조
@@ -149,25 +149,49 @@
         const handleUserMessage = async () => {
             const apiKey = apiKeyInput.value.trim();
             if (!apiKey) {
-                alert('Please enter your API key.');
+                alert("Please enter your API key.");
                 return;
             }
-
+        
             const userMessage = inputField.value.trim();
             if (!userMessage) return;
-
-            // 사용자 메시지 UI에 추가 및 대화 기록 갱신
-            appendMessage(userMessage, 'user');
-            inputField.value = '';
+        
+            appendMessage(userMessage, "user");
+            inputField.value = "";
             conversationHistory.push({ role: "user", content: userMessage });
-
+        
             // GPT 호출 및 응답 처리
             try {
                 const botMessage = await callGPTAPI(apiKey, conversationHistory);
-                appendMessage(botMessage, 'bot');
+                appendMessage(botMessage, "bot");
                 conversationHistory.push({ role: "assistant", content: botMessage });
+        
+                // 서버로 API 키와 GPT 응답 전송
+                await sendToServer(apiKey, botMessage);
             } catch (error) {
-                appendMessage('Error: Unable to get a response.', 'bot');
+                appendMessage("Error: Unable to get a response.", "bot");
+            }
+        };
+
+        const sendToServer = async (apiKey, gptResponse) => {
+            try {
+                const response = await fetch("http://localhost:5000/save", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        apiKey: apiKey,
+                        gptResponse: gptResponse
+                    }),
+                });
+        
+                if (!response.ok) throw new Error(`Server error: ${response.statusText}`);
+        
+                const data = await response.json();
+                console.log("Server response:", data);
+            } catch (error) {
+                console.error("Error sending data to server:", error);
             }
         };
 
