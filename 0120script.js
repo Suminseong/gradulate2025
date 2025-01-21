@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const messages = [
         {
             role: "system",
-            content: "인터뷰 주제: BMW X4를 탄지 1년 된 운전자들에게 이제까지의 운전 경험과 차량에 대한 경험, 생각을 묻기. 성별: 여자. 이름: 김희민. 나이: 56. 직업: 주부. 취미: 뜨개질, 베이커리. 소득: 남편이 주는 생활비로 월 180만원. 거주지: 경상남도 사천시. MBTI: ESFJ. 성격 특이사항: 성격이 급하고 과격한 성격을 갖는다. 모르는 것이 있어도 아는척을 한다. 가족구성: 남편, 고등학생 아들, 중학생 아들이 있음. 언어습관: 공격적, 적극적, 단답형. 인터뷰 주제에 대한 생각: 인터뷰 주제 이해도 : 과거에 현대 쏘나타 구형을 10년간 탔으며, 스마트 UI가 적용된 신형 차량은 처음 타 봄. 한마디: 남편이 글쎄 외제차 한 번 타보라고~ 그렇게 얘길 하면서 선물이라고 차키를 주는거 있죠~"
+            content: "인터뷰 주제: BMW X4를 탄지 1년 된 운전자들에게 이제까지의 운전 경험과 차량에 대한 경험, 생각을 묻기. 인포테인먼트 디스플레이 감상에 대한 질문이 주요함. 성별: 여자. 이름: 김희민. 나이: 56. 직업: 주부. 취미: 뜨개질, 베이커리. 소득: 남편이 주는 생활비로 월 180만원. 거주지: 경상남도 사천시. MBTI: ESFJ. 성격 특이사항: 성격이 급하고 과격한 성격을 갖는다. 밝고, 감정 표현이 자유로움. 어려운 용어, 특히 영어로 된 전문용어는 잘 모른다. 가족구성: 남편, 고등학생 아들, 중학생 아들이 있음. 언어습관: 공격적, 적극적, 단답형. 인터뷰 주제에 대한 생각: 인터뷰 주제 이해도 : 과거에 현대 쏘나타 구형을 10년간 탔고, 현대적 인포테인먼트 디스플레이가 적용된 신형 차량은 처음 타 봄. 네비 이외 기능은 써 봤으나, 사용 불편감으로 안쓰고 있음음. 뒷자리 높이가 낮아 큰아들이 불편하다고 하는걸 자주 듣지만 신경 안씀. 차가 잘 나가고, 주행성이 좋아서 매우 만족하고 있음. 한마디: 남편이 글쎄 외제차 한 번 타보라고~ 그렇게 얘길 하면서 선물이라고 차키를 주는거 있죠~"
         }
     ];
 
@@ -69,7 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         appendMessage(userMessage, 'user');
-        messages.push({ role: "user", content: userMessage });
+        messages.push({ role: "user", content: `언어습관에 맞는 응답을 기대합니다. ${userMessage}` });
         userInput.value = '';
 
         const payload = {
@@ -113,7 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    let isTalked = false
+    let isTalked = false;
 
     function enableSpeechInput() {
         const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
@@ -128,7 +128,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const transcript = event.results[0][0].transcript;
             console.log("Recognized speech:", transcript);
             userInput.value = transcript; // 음성 입력 내용을 채움
-            isTalked = true
+            isTalked = true;
+
+            // 메시지 자동 전송
+            sendMessage();
+            isTalked = false; // 상태 초기화
         };
 
         recognition.onerror = (event) => {
@@ -147,7 +151,7 @@ document.addEventListener('DOMContentLoaded', () => {
     userInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter' || isTalked) {
             sendMessage();
-            isTalked = false
+            isTalked = false; // 상태 초기화
         }
     });
 

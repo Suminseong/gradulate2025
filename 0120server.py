@@ -8,6 +8,7 @@ from io import BytesIO
 # 로깅 설정
 logging.basicConfig(
     level=logging.DEBUG,
+    encoding='UTF-8',
     format='%(asctime)s - %(levelname)s - %(message)s',
     filename='test.log',
     filemode='a',
@@ -33,7 +34,7 @@ def generate_audio(api_key, gpt_response):
     }
     payload = {
         "model": "tts-1",
-        "input": gpt_response,
+        "input": f"{gpt_response}",
         "voice": "nova",
         "response_format": "wav"
     }
