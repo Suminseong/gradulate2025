@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const messages = [
         {
             role: "system",
-            content: "사용자가 제출한 내용을 읽고 퍼소나를 생성합니다. 성별: 남자 또는 여자. 이름: 한국식으로 3글자 이름만 허용. 나이: 사용자가 원하는 연령대에 맞춰 생성. 직업: 사용자가 제시한 인터뷰 또는 상황조건에 맞게 생성합니다. 또는, 사용자가 원하는 직업으로 넣어도 됩니다. 취미: 가상의 인물이 가진 취미입니다. 인터뷰 주제와 꼭 관련될 필요는 없으며, MBTI나 거주지, 소득과 관련성만 있으면 됩니다. 예를 들어, 소득이 낮은데 자동차 수집, 악기 취미가 있으면 안됨. 소득: 알바/정규직/계약직, 현재 벌고 있는 연간 수입. 거주지(도/광역시~시/군/구): 대전광역시 유성구, 경상남도 사천시 등 대략적인 지명만 적으면 됩니다.  MBTI: 16가지 성격유형인 MBTI중 하나를 골라 집어넣은 뒤, 그에 대한 짧은 설명도 적으세요. 성격 특이사항: MBTI로 표현되지 않을 수 있는 내용들도 자유롭게 추가합니다. 가족구성: 1인가구, 연인동거, 결혼, 자녀유무, 부모동거, 조부모가정, 한부모가정, 아동보호소, 기러기가정 등등 다양한 상황들에서 선택. 언어습관: 공격적, 다혈질, 내성적, 적극적, 수비적, 말 더듬음, 소극적, 단답형, 장문형, 지역 사투리 등 주요 언어습관. 인터뷰 주제에 대한 생각: 인터뷰 주제에 대한 이해도, 흥미, 경험에 대한 이야기, 상황등을 100자 이내로 자유롭게 채웁니다. 한마디: 인터뷰 대상자가 자기소개를 하는 한 문장 대사를 출력. 언어습관을 활용."
+            content: "인터뷰 주제: BMW X4를 탄지 1년 된 운전자들에게 이제까지의 운전 경험과 차량에 대한 경험, 생각을 묻기. 성별: 여자. 이름: 김희민. 나이: 56. 직업: 주부. 취미: 뜨개질, 베이커리. 소득: 남편이 주는 생활비로 월 180만원. 거주지: 경상남도 사천시. MBTI: ESFJ. 성격 특이사항: 성격이 급하고 과격한 성격을 갖는다. 모르는 것이 있어도 아는척을 한다. 가족구성: 남편, 고등학생 아들, 중학생 아들이 있음. 언어습관: 공격적, 적극적, 단답형. 인터뷰 주제에 대한 생각: 인터뷰 주제 이해도 : 과거에 현대 쏘나타 구형을 10년간 탔으며, 스마트 UI가 적용된 신형 차량은 처음 타 봄. 한마디: 남편이 글쎄 외제차 한 번 타보라고~ 그렇게 얘길 하면서 선물이라고 차키를 주는거 있죠~"
         }
     ];
 
@@ -113,47 +113,43 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    let isTalked = false;
+    let isTalked = false
 
-function enableSpeechInput() {
-    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-    recognition.lang = "ko-KR"; // 한국어 설정
-    recognition.interimResults = false;
+    function enableSpeechInput() {
+        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        recognition.lang = "ko-KR"; // 한국어 설정
+        recognition.interimResults = false;
 
-    recognition.onstart = () => {
-        console.log("Voice recognition started...");
-    };
+        recognition.onstart = () => {
+            console.log("Voice recognition started...");
+        };
 
-    recognition.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
-        console.log("Recognized speech:", transcript);
-        userInput.value = transcript; // 음성 입력 내용을 채움
-        isTalked = true;
+        recognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript;
+            console.log("Recognized speech:", transcript);
+            userInput.value = transcript; // 음성 입력 내용을 채움
+            isTalked = true
+        };
 
-        // 메시지 자동 전송
-        sendMessage();
-        isTalked = false; // 상태 초기화
-    };
+        recognition.onerror = (event) => {
+            console.error("Speech recognition error:", event.error);
+        };
 
-    recognition.onerror = (event) => {
-        console.error("Speech recognition error:", event.error);
-    };
+        recognition.onend = () => {
+            console.log("Voice recognition ended.");
+        };
 
-    recognition.onend = () => {
-        console.log("Voice recognition ended.");
-    };
-
-    recognition.start();
-}
-
-sendButton.addEventListener('click', sendMessage);
-micButton.addEventListener('click', enableSpeechInput); // 마이크 버튼 이벤트
-userInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter' || isTalked) {
-        sendMessage();
-        isTalked = false; // 상태 초기화
+        recognition.start();
     }
-});
+
+    sendButton.addEventListener('click', sendMessage);
+    micButton.addEventListener('click', enableSpeechInput); // 마이크 버튼 이벤트
+    userInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' || isTalked) {
+            sendMessage();
+            isTalked = false
+        }
+    });
 
     connectWebSocket();
 });
