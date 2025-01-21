@@ -75,7 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const payload = {
             model: modelId,
             messages: messages,
-            max_tokens: 2700,
+            max_tokens: 4000, // 음성 tts 인식 한계가 4000이라 하길래 그대로 넣음
             temperature: 1,
             top_p: 0.8,
             frequency_penalty: 0.2,
