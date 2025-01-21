@@ -6,8 +6,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const userInput = document.getElementById('userInput');
     const sendButton = document.getElementById('sendButton');
     const apiKeyInput = document.getElementById('apiKey');
+    const micButton = document.getElementById('micButton'); // 음성 입력 버튼 추가
 
-    // 대화 세션 상태 저장 (문맥 유지용)
+    const audioElement = new Audio(); // 오디오 재생을 위한 HTMLAudioElement
+
     const messages = [
         {
             role: "system",
@@ -15,28 +17,29 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     ];
 
-    // WebSocket 연결 객체
     let socket;
 
-    // WebSocket 연결 초기화
     function connectWebSocket() {
-        socket = new WebSocket("ws://localhost:5500/ws");
+        socket = new WebSocket("ws://localhost:5501/ws");
 
         socket.onopen = () => {
             console.log("WebSocket connection established.");
         };
 
-        socket.onmessage = (event) => {
+        socket.onmessage = async (event) => {
             try {
-                const data = JSON.parse(event.data);
-                console.log("Received from server:", data);
+                const audioBlob = new Blob([event.data], { type: 'audio/wav' });
+                const audioUrl = URL.createObjectURL(audioBlob);
+                audioElement.src = audioUrl;
+                audioElement.play();
+                console.log("Audio is playing...");
             } catch (error) {
                 console.error("Error processing WebSocket message:", error);
             }
         };
 
-        socket.onclose = () => {
-            console.log("WebSocket connection closed.");
+        socket.onclose = (event) => {
+            console.warn("WebSocket connection closed:", event.code);
         };
 
         socket.onerror = (error) => {
@@ -44,16 +47,14 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
-    // Function to append messages to the chatbox
     function appendMessage(message, sender) {
         const messageElement = document.createElement('div');
         messageElement.className = `message ${sender}`;
         messageElement.textContent = message;
         chatbox.appendChild(messageElement);
-        chatbox.scrollTop = chatbox.scrollHeight; // Auto-scroll to bottom
+        chatbox.scrollTop = chatbox.scrollHeight;
     }
 
-    // Function to send user message to the GPT API
     async function sendMessage() {
         const apiKey = apiKeyInput.value.trim();
         const userMessage = userInput.value.trim();
@@ -67,15 +68,13 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Append user's message to the UI and messages array
         appendMessage(userMessage, 'user');
         messages.push({ role: "user", content: userMessage });
-        userInput.value = ''; // Clear input field
+        userInput.value = '';
 
-        // Prepare API payload
         const payload = {
             model: modelId,
-            messages: messages, // 문맥이 유지된 메시지 배열 전달
+            messages: messages,
             max_tokens: 2700,
             temperature: 1,
             top_p: 0.8,
@@ -84,7 +83,6 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         try {
-            // Send API request using fetch
             const response = await fetch(apiUrl, {
                 method: "POST",
                 headers: {
@@ -101,31 +99,61 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
             const botMessage = data.choices[0]?.message?.content || "Error: No response from API.";
 
-            // Append GPT's response to the UI and messages array
             appendMessage(botMessage, 'bot');
             messages.push({ role: "assistant", content: botMessage });
 
-            // WebSocket을 통해 서버로 데이터 전송
             if (socket && socket.readyState === WebSocket.OPEN) {
                 socket.send(JSON.stringify({ apiKey, gptResponse: botMessage }));
                 console.log("Sent to WebSocket server:", { apiKey, gptResponse: botMessage });
             } else {
                 console.warn("WebSocket is not connected.");
             }
-
         } catch (error) {
             appendMessage(`Error: ${error.message}`, 'bot');
         }
     }
 
-    // Attach event listeners
-    sendButton.addEventListener('click', sendMessage);
-    userInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            sendMessage();
-        }
-    });
+    let isTalked = false;
 
-    // WebSocket 연결 실행
+function enableSpeechInput() {
+    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    recognition.lang = "ko-KR"; // 한국어 설정
+    recognition.interimResults = false;
+
+    recognition.onstart = () => {
+        console.log("Voice recognition started...");
+    };
+
+    recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        console.log("Recognized speech:", transcript);
+        userInput.value = transcript; // 음성 입력 내용을 채움
+        isTalked = true;
+
+        // 메시지 자동 전송
+        sendMessage();
+        isTalked = false; // 상태 초기화
+    };
+
+    recognition.onerror = (event) => {
+        console.error("Speech recognition error:", event.error);
+    };
+
+    recognition.onend = () => {
+        console.log("Voice recognition ended.");
+    };
+
+    recognition.start();
+}
+
+sendButton.addEventListener('click', sendMessage);
+micButton.addEventListener('click', enableSpeechInput); // 마이크 버튼 이벤트
+userInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter' || isTalked) {
+        sendMessage();
+        isTalked = false; // 상태 초기화
+    }
+});
+
     connectWebSocket();
 });
