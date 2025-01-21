@@ -39,7 +39,7 @@ def generate_audio(api_key, gpt_response):
         "response_format": "wav"
     }
     try:
-        logger.debug(f"Sending request to OpenAI API with headers: {headers} and payload: {payload}")
+        logger.debug(f"헤더 전송됨 header: {headers} payload: {payload}")
         response = requests.post(url, headers=headers, json=payload, stream=True)
         if response.status_code == 200:
             audio_data = BytesIO()
@@ -49,15 +49,15 @@ def generate_audio(api_key, gpt_response):
             audio_data.seek(0)
             return audio_data
         else:
-            logger.error(f"Error from OpenAI API: {response.status_code}, {response.text}")
+            logger.error(f"Open AI 에러: {response.status_code}, {response.text}")
             return None
     except requests.RequestException as e:
-        logger.error(f"Error during API request: {e}")
+        logger.error(f"Error API 요청: {e}")
         return None
 
 @sock.route('/ws')
 def websocket(ws):
-    logger.debug("WebSocket route accessed")
+    logger.debug("Websocket 연결 성공")
     try:
         while True:
             data = ws.receive()
@@ -67,16 +67,16 @@ def websocket(ws):
                 gpt_response = parsed_data.get('gptResponse', None)
 
                 if gpt_response:
-                    logger.info(f"Processing GPT Response: {gpt_response}")
+                    logger.info(f"GPT response: {gpt_response}")
                     audio_data = generate_audio(api_key, gpt_response)
 
                     if audio_data and audio_data.getbuffer().nbytes > 0:
                         logger.info(f"Audio data size: {audio_data.getbuffer().nbytes} bytes")
-                        ws.send(audio_data.getvalue())
+                        ws.send(audio_data.getvalue()) # 오디오 결과 바이너리 버퍼(풀 파일)로 전달
                         logger.info("Audio file sent successfully.")
                     else:
                         logger.error("Audio data is empty or invalid.")
-                        ws.send(json.dumps({"status": "error", "message": "Generated audio is empty"}))
+                        ws.send(json.dumps({"status": "error", "message": "audio data empty"}))
                 else:
                     logger.warning("No GPT Response provided, ignoring message.")
                     ws.send(json.dumps({"status": "error", "message": "No GPT Response provided"}))

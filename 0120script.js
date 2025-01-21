@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
         socket = new WebSocket("ws://localhost:5501/ws");
 
         socket.onopen = () => {
-            console.log("WebSocket connection established.");
+            console.log("문이 열리고 멋진 그대가 들어오네요우.");
         };
 
         socket.onmessage = async (event) => {
@@ -104,9 +104,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (socket && socket.readyState === WebSocket.OPEN) {
                 socket.send(JSON.stringify({ apiKey, gptResponse: botMessage }));
-                console.log("Sent to WebSocket server:", { apiKey, gptResponse: botMessage });
+                console.log("메시지 전송됨:", { apiKey, gptResponse: botMessage });
             } else {
-                console.warn("WebSocket is not connected.");
+                console.warn("웹소켓이 중단되었습니다.");
             }
         } catch (error) {
             appendMessage(`Error: ${error.message}`, 'bot');
@@ -117,22 +117,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function enableSpeechInput() {
         const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-        recognition.lang = "ko-KR"; // 한국어 설정
+        recognition.lang = "ko-KR"; 
         recognition.interimResults = false;
 
         recognition.onstart = () => {
-            console.log("Voice recognition started...");
+            console.log("음성 인식중중");
         };
 
         recognition.onresult = (event) => {
             const transcript = event.results[0][0].transcript;
             console.log("Recognized speech:", transcript);
-            userInput.value = transcript; // 음성 입력 내용을 채움
-            isTalked = true;
-
-            // 메시지 자동 전송
+            userInput.value = transcript;
+            isTalked = true; 
             sendMessage();
-            isTalked = false; // 상태 초기화
+            isTalked = false; 
         };
 
         recognition.onerror = (event) => {
