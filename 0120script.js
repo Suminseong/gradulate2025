@@ -121,7 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
         recognition.interimResults = false;
 
         recognition.onstart = () => {
-            console.log("음성 인식중중");
+            console.log("음성 인식중");
         };
 
         recognition.onresult = (event) => {
