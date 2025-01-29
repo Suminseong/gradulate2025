@@ -1,3 +1,4 @@
 outproject/
 *.log
 .env
+venv
