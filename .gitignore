@@ -1,4 +1,4 @@
 outproject/
 *.log
 .env
-venv
+model_vosk

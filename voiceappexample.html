@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>멀티 모델 STT 데모</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.4.1/socket.io.js"></script>
+</head>
+<body>
+  <h1>멀티 모델 STT 데모</h1>
+  
+  <div>
+    <h2>VOSK :</h2>
+    <p id="vosk"></p>
+  </div>
+  
+  <div>
+    <h2>Kaldi(지금은 vosk가 대신 해요) :</h2>
+    <p id="kaldi"></p>
+  </div>
+  
+  <div>
+    <h2>다른모델(지금은 vosk가 대신 해요) :</h2>
+    <p id="others"></p>
+  </div>
+
+  <div>
+    <h2>Web Speech API :</h2>
+    <p id="webspeech"></p>
+  </div>
+  
+  <script>
+    // SocketIO 서버와 연결
+    var socket = io("http://127.0.0.1:5000");
+    socket.on('connect', function() {
+      console.log('서버에 연결됨');
+    });
+    socket.on('result', function(data) {
+      document.getElementById('vosk').textContent = data.vosk;
+      document.getElementById('kaldi').textContent = data.kaldi;
+      document.getElementById('others').textContent = data.others;
+    });
+
+    // 마이크에서 오디오 캡처
+    navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+      .then(function(stream) {
+        // AudioContext를 16kHz로 생성 (VOSK는 16kHz PCM을 요구)
+        const audioContext = new AudioContext({ sampleRate: 16000 });
+        const source = audioContext.createMediaStreamSource(stream);
+        // ScriptProcessorNode 생성 (4096 샘플 단위)
+        const processor = audioContext.createScriptProcessor(4096, 1, 1);
+
+        source.connect(processor);
+        processor.connect(audioContext.destination);
+
+        processor.onaudioprocess = function(e) {
+          const inputData = e.inputBuffer.getChannelData(0);
+          // Float32Array를 16비트 PCM으로 변환 (little-endian)
+          let buffer = new ArrayBuffer(inputData.length * 2);
+          let view = new DataView(buffer);
+          for (let i = 0; i < inputData.length; i++) {
+            let s = Math.max(-1, Math.min(1, inputData[i]));
+            view.setInt16(i * 2, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+          }
+          // 변환된 오디오 데이터를 서버에 전송
+          socket.emit('audio', buffer);
+        }
+      })
+      .catch(function(err) {
+        console.error('마이크 접근 오류:', err);
+      });
+
+    // Web Speech API 추가
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const recognition = new SpeechRecognition();
+        recognition.continuous = true;
+        recognition.interimResults = false; // 실시간 결과 X (최종 결과만 받음)
+        recognition.lang = 'en-US';
+      
+        let transcript = ''; // 누적된 텍스트 저장
+      
+        recognition.onresult = function(event) {
+          const newTranscript = event.results[event.resultIndex][0].transcript; // 새로 인식된 문장
+          transcript += newTranscript + ' '; // 기존 텍스트에 추가
+          document.getElementById('webspeech').textContent = transcript.trim();
+        };
+      
+        recognition.onerror = function(event) {
+          console.error('Web Speech API 오류:', event.error);
+        };
+      
+        recognition.onend = function() {
+          console.log('Web Speech API 종료됨. 다시 시작.');
+          recognition.start(); // 자동으로 다시 시작
+        };
+      
+        recognition.start();
+      } else {
+        console.warn('이 브라우저는 Web Speech API를 지원하지 않습니다.');
+        document.getElementById('webspeech').textContent = "Web Speech API 지원되지 않음";
+      }
+      
+      
+  </script>
+</body>
+</html>
