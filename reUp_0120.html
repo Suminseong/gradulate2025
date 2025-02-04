@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +8,17 @@
     <link rel="stylesheet" href="0120style.css">
     <script src="0120script.js" defer></script>
 </head>
+<style>
+    #chatbox {
+        margin-top: 20px;
+        border: 1px solid #ccc;
+        padding: 10px;
+        width: 100%;
+        height: 300px;
+        overflow-y: scroll;
+    }
+</style>
+
 <body>
     <h1>음성 출력 테스트</h1>
 
@@ -19,8 +31,9 @@
     <button id="sendButton">Send Request</button>
     <button id="micButton">🎤</button>
 
-    <div id="chatbox" style="margin-top: 20px; border: 1px solid #ccc; padding: 10px; width: 100%; height: 300px; overflow-y: scroll;">
+    <div id="chatbox">
         <!-- Chat messages will appear here -->
     </div>
 </body>
+
 </html>
